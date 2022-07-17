@@ -103,7 +103,6 @@ function callback()
     $user = json_decode($response, true);
     echo "Hello {$user['lastname']} {$user['firstname']}";
 }
-
 function fbcallback()
 {
     ["code" => $code, "state" => $state] = $_GET;
@@ -131,7 +130,7 @@ function fbcallback()
     echo "Hello {$user['name']}";
 }
 function lkdncallback(){
-    ["code" => $code, "state" => $state] = $_GET;
+    ["code" => $code] = $_GET;
 
     $specifParams = [
             'code' => $code,
@@ -143,7 +142,7 @@ function lkdncallback(){
         'client_secret' => LINKEDIN_CLIENT_SECRET,
         'redirect_uri' => 'http://localhost:8081/lkdn_callback',
     ], $specifParams));
-    $response = file_get_contents("https://graph.facebook.com/v2.10/oauth/access_token?{$queryParams}");
+    $response = file_get_contents("https://www.linkedin.com/uas/oauth2/accessToken?{$queryParams}");
     $token = json_decode($response, true);
     
     $context = stream_context_create([
@@ -151,9 +150,10 @@ function lkdncallback(){
             'header' => "Authorization: Bearer {$token['access_token']}"
             ]
         ]);
-    $response = file_get_contents("https://graph.facebook.com/v2.10/me", false, $context);
+    $response = file_get_contents("https://api.linkedin.com/v2/me", false, $context);
     $user = json_decode($response, true);
-    echo "Hello {$user['name']}";
+    echo "Hello {$user['localizedLastName']} {$user['localizedFirstName']}";
+
 }
 function googlecallback(){
     var_dump("GOOGLE CONNECTED");
