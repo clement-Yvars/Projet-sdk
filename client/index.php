@@ -1,15 +1,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
 <?php
-
-define('OAUTH_CLIENT_ID', '621f59c71bc35');
-define('OAUTH_CLIENT_SECRET', '621f59c71bc36');
-define('FACEBOOK_CLIENT_ID', '1154946705081703');
-define('FACEBOOK_CLIENT_SECRET', '4e9835eeba3388b55bcb02b2cd27d522');
-define('LINKEDIN_CLIENT_ID', '78ih5ts4jtua92');
-define('LINKEDIN_CLIENT_SECRET','gTIo9xTOquRmcxx1');
-define('GOOGLE_CLIENT_ID', '44229373992-45hc7opqdtd7p2iq1bjr1c8g5rga6s2r.apps.googleusercontent.com');
-define('GOOGLE_CLIENT_SECRET','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');
+include 'conf_define.php';
 
 
 function login()
@@ -171,19 +163,18 @@ function googlecallback(){
         'client_secret' => GOOGLE_CLIENT_SECRET,
         'redirect_uri' => 'http://localhost:8081/google_callback',
     ], $specifParams));
-    echo($queryParams);
     $response = file_get_contents("https://www.googleapis.com/oauth2/v1/userinfo?alt=json?{$queryParams}");
     $token = json_decode($response, true);
-    var_dump($token);
     
     $context = stream_context_create([
         'http' => [
             'header' => "Authorization: Bearer {$token['access_token']}"
             ]
         ]);
-    // $response = file_get_contents("https://graph.facebook.com/v2.10/me", false, $context);
+    $response = file_get_contents("https://api.linkedin.com/v2/me", false, $context);
     $user = json_decode($response, true);
-    echo "Hello {$user['name']}";
+    echo "Hello {$user['localizedLastName']} {$user['localizedFirstName']}";
+
 }
 
 $route = $_SERVER["REQUEST_URI"];
