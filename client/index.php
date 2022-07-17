@@ -1,8 +1,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
 <?php
-include 'conf_define.php';
-
+include "conf_define.php";
 
 function login()
 {
@@ -55,9 +54,16 @@ function login()
     // Design pattern de factory 
     // Class abstraite provider provider interface
     //echo "https://www.linkedin.com/oauth/v2/authorization?{$queryParams}";
-    echo "<a class='btn btn-danger' href=\"https://accounts.google.com/o/oauth2/v2/auth?{$queryParams}\">Google</a>";
-    echo "<br>";
+    $queryParams= http_build_query([
+        'scope' => 'identify',
+        'response_type' => 'code',
+        'client_id' => DISCORD_CLIENT_ID,
+        'redirect_uri' => 'http://localhost:8081/discord_callback',
+        'state' => bin2hex(random_bytes(16))
+    ]);
+    echo"<br><a href=\"https://discordapp.com/api/oauth2/authorize?{$queryParams}\">Login with Discord</a>";
 }
+
 
 // Exchange code for token then get user info
 function callback()
@@ -121,6 +127,7 @@ function fbcallback()
     $user = json_decode($response, true);
     echo "Hello {$user['name']}";
 }
+
 function lkdncallback(){
     ["code" => $code] = $_GET;
 
@@ -149,7 +156,6 @@ function lkdncallback(){
 }
 function googlecallback(){
     var_dump("GOOGLE CONNECTED");
-    var_dump($_GET);
 
     ["code" => $code, "state" => $state] = $_GET;
 
@@ -163,18 +169,58 @@ function googlecallback(){
         'client_secret' => GOOGLE_CLIENT_SECRET,
         'redirect_uri' => 'http://localhost:8081/google_callback',
     ], $specifParams));
+    echo($queryParams);
     $response = file_get_contents("https://www.googleapis.com/oauth2/v1/userinfo?alt=json?{$queryParams}");
     $token = json_decode($response, true);
+    var_dump($token);
     
     $context = stream_context_create([
         'http' => [
             'header' => "Authorization: Bearer {$token['access_token']}"
             ]
         ]);
-    $response = file_get_contents("https://api.linkedin.com/v2/me", false, $context);
+    // $response = file_get_contents("https://graph.facebook.com/v2.10/me", false, $context);
     $user = json_decode($response, true);
-    echo "Hello {$user['localizedLastName']} {$user['localizedFirstName']}";
+    echo "Hello {$user['name']}";
+}
+function discordcallback(){
+    ["code" => $code, "state" => $state] = $_GET;
+    $specifParams = [
+            'code' => $code,
+            'grant_type' => 'authorization_code',
+        ];
+    $queryParams = http_build_query(array_merge([
+        'client_id' => DISCORD_CLIENT_ID,
+        'client_secret' => DISCORD_CLIENT_SECRET,
+        'redirect_uri' => 'http://localhost:8081/discord_callback',
+        'response_type' => 'code',
+        'scope' => 'identify',
+        "state" => bin2hex(random_bytes(16))
 
+    ], $specifParams));
+    $context = stream_context_create(
+        [
+        'http' => [
+            'method' => "POST",
+            'header' => "Content-type: application/x-www-form-urlencoded\r\n"
+            . "Content-Length: " . strlen($queryParams) . "\r\n",
+            'content' => $queryParams
+            ]
+        ]
+    );
+
+    $response = file_get_contents("https://discordapp.com/api/oauth2/token", false, $context);
+    $token = json_decode($response, true);
+    $context = stream_context_create([
+        'http' => [
+            'method' => "GET",
+            'header' => "Authorization: Bearer {$token['access_token']}"
+            ]
+        ]);
+    $response = file_get_contents("https://discord.com/api/oauth2/@me", false, $context);
+    $user = json_decode($response, true);
+
+    echo "<br> <h1>Hello {$user['user']['username']}</h1>";
 }
 
 $route = $_SERVER["REQUEST_URI"];
@@ -193,6 +239,9 @@ switch (strtok($route, "?")) {
         break;
     case '/google_callback':
         googlecallback();
+        break;
+    case '/discord_callback':
+        discordcallback();
         break;
     default:
         http_response_code(404);

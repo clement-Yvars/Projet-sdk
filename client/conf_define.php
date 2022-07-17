@@ -6,5 +6,8 @@ define('FACEBOOK_CLIENT_SECRET', '4e9835eeba3388b55bcb02b2cd27d522');
 define('LINKEDIN_CLIENT_ID', '78ih5ts4jtua92');
 define('LINKEDIN_CLIENT_SECRET','gTIo9xTOquRmcxx1');
 
+define('GOOGLE_CLIENT_ID', '44229373992-45hc7opqdtd7p2iq1bjr1c8g5rga6s2r.apps.googleusercontent.com');
+define('GOOGLE_CLIENT_SECRET','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');
+
 define('DISCORD_CLIENT_ID', '998337563385409656');
 define('DISCORD_CLIENT_SECRET','N1b_IKsmH37-Fi2m6cBBk0uJQrYlaH8K');
